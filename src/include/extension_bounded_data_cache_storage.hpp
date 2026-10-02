@@ -1,4 +1,5 @@
-// Extension-managed in-memory data cache: bounded by entry count and per-entry timeout.
+// Extension-managed in-memory data cache: bounded by entry count and per-entry timeout, with a pluggable eviction
+// policy (LRU or W-TinyLFU).
 
 #pragma once
 
@@ -9,9 +10,13 @@
 #include "duckdb/common/vector.hpp"
 #include "in_memory_data_cache_storage.hpp"
 #include "shared_value_lru_cache.hpp"
+#include "w_tinylfu_cache.hpp"
 
 namespace duckdb {
 
+// [Cache] is a thread-safe cache of `InMemCacheBlock` to `InMemCacheDataEntry`, which exposes the same interfaces as
+// `ThreadSafeSharedValueLruCache`.
+template <typename Cache>
 class ExtensionBoundedDataCacheStorage final : public InMemoryDataCacheStorage {
 public:
 	// @param max_entries: 0 means unbounded.
@@ -32,7 +37,17 @@ public:
 	vector<std::pair<InMemCacheBlock, shared_ptr<InMemCacheDataEntry>>> Take() override;
 
 private:
-	ThreadSafeSharedValueLruCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess> lru_cache;
+	Cache cache;
 };
+
+using LruDataCacheStorage = ExtensionBoundedDataCacheStorage<
+    ThreadSafeSharedValueLruCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess>>;
+using WTinyLfuDataCacheStorage = ExtensionBoundedDataCacheStorage<
+    ThreadSafeWTinyLfuCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess, InMemCacheBlockHash>>;
+
+extern template class ExtensionBoundedDataCacheStorage<
+    ThreadSafeSharedValueLruCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess>>;
+extern template class ExtensionBoundedDataCacheStorage<
+    ThreadSafeWTinyLfuCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess, InMemCacheBlockHash>>;
 
 } // namespace duckdb

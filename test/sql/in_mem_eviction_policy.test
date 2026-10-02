@@ -1,0 +1,51 @@
+# name: test/sql/in_mem_eviction_policy.test
+# description: test W-TinyLFU eviction policy for the in-memory data block cache
+# group: [sql]
+
+require cache_httpfs
+
+# Eviction policy and cache capacity have to be set before any cache access.
+statement ok
+SET cache_httpfs_in_mem_cache_eviction_policy='w_tinylfu';
+
+statement ok
+SET cache_httpfs_type='in_mem';
+
+statement ok
+SET cache_httpfs_max_in_mem_cache_block_count=4;
+
+# The test file to read is ~16KiB, which takes 16 blocks, so reads keep evicting blocks.
+statement ok
+SET cache_httpfs_cache_block_size=1024;
+
+statement ok
+SELECT cache_httpfs_clear_cache();
+
+query III
+SELECT * FROM cache_httpfs_get_data_cache_config();
+----
+in_mem		1024	w_tinylfu
+
+loop i 0 3
+
+query II
+SELECT COUNT(*), SUM(LENGTH("Name")) FROM read_csv_auto('https://raw.githubusercontent.com/dentiny/duck-read-cache-fs/refs/heads/main/test/data/stock-exchanges.csv');
+----
+251	5568
+
+query IIIIII
+SELECT * FROM read_csv_auto('https://raw.githubusercontent.com/dentiny/duck-read-cache-fs/refs/heads/main/test/data/stock-exchanges.csv') LIMIT 2;
+----
+1	Africa	Lesotho	HYBSE	NULL	2019-03-25
+2	Asia	Kazakhstan	Astana International Financial Centre	AIXK	2018-11-18
+
+endloop
+
+query I
+SELECT COUNT(*) <= 4 FROM cache_httpfs_cache_status_query();
+----
+true
+
+# Clear cache after test.
+statement ok
+SELECT cache_httpfs_clear_cache();

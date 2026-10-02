@@ -1,3 +1,9 @@
+# Unreleased
+
+## Added
+
+- Add W-TinyLFU eviction for the extension-managed in-memory data block cache, selected by `cache_httpfs_in_mem_cache_eviction_policy` (`lru` by default, or `w_tinylfu`).
+
 # 0.14.3
 
 ## Updated

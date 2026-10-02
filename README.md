@@ -18,6 +18,7 @@ This repository is made as read-only filesystem for remote access, which serves 
 Key features:
 - Caching for data, which adds support for remote file access to improve IO performance and reduce egress cost; several caching options and entities are supported
   + in-memory, cache fetched file content into blocks and leverages a LRU cache to evict stale blocks
+    - set `cache_httpfs_in_mem_cache_eviction_policy='w_tinylfu'` for W-TinyLFU eviction, which only admits a new block when it's accessed more frequently than the block it would evict, so a large one-pass scan doesn't flush hot blocks
   + on-disk (default), already read blocks are stored to load filesystem, and evicted on insufficient disk space based on their access timestamp
   + no cache, it's allowed to disable cache and fallback to httpfs without any side effects
 - Parallel read, read operations are split into size-tunable chunks to increase cache hit rate and improve performance
@@ -100,7 +101,7 @@ At the moment macOS and Linux are supported, shoot us a [feature request](https:
 | **Cache invalidation** | No support, on the roadmap | Optional (mtime + size) | Always validates (mtime, ETag for HTTP) |
 | **Explicit cache eviction**| Yes | Yes | Yes | 
 | **Data integrity** | No support, on the roadmap | Checksum validation + auto-recovery | ETag/version checking |
-| **Eviction policy** | LRU for in-memory cache, LRU or deadline-based eviction for on-disk | LRU with configurable size limit | LRU (memory-based) |
+| **Eviction policy** | LRU (default) or W-TinyLFU for in-memory cache, LRU or deadline-based eviction for on-disk | LRU with configurable size limit | LRU (memory-based) |
 | **Observability** | Provides cache access stats | No | No |
 
 ## Development

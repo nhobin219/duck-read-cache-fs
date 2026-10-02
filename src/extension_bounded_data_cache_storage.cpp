@@ -4,25 +4,28 @@
 
 namespace duckdb {
 
-ExtensionBoundedDataCacheStorage::ExtensionBoundedDataCacheStorage(size_t max_entries, uint64_t timeout_millisec)
-    : lru_cache(max_entries, timeout_millisec) {
+template <typename Cache>
+ExtensionBoundedDataCacheStorage<Cache>::ExtensionBoundedDataCacheStorage(size_t max_entries, uint64_t timeout_millisec)
+    : cache(max_entries, timeout_millisec) {
 }
 
-void ExtensionBoundedDataCacheStorage::Put(InMemCacheBlock key, PageAlignedDataChunk chunk, string version_tag) {
+template <typename Cache>
+void ExtensionBoundedDataCacheStorage<Cache>::Put(InMemCacheBlock key, PageAlignedDataChunk chunk, string version_tag) {
 	auto entry = make_shared_ptr<InMemCacheDataEntry>();
 	entry->data = std::move(chunk);
 	entry->version_tag = std::move(version_tag);
-	lru_cache.Put(std::move(key), std::move(entry));
+	cache.Put(std::move(key), std::move(entry));
 }
 
-optional<PinnedBlock> ExtensionBoundedDataCacheStorage::Get(const InMemCacheBlock &key,
-                                                            const string &expected_version_tag) {
-	auto entry = lru_cache.Get(key);
+template <typename Cache>
+optional<PinnedBlock> ExtensionBoundedDataCacheStorage<Cache>::Get(const InMemCacheBlock &key,
+                                                                   const string &expected_version_tag) {
+	auto entry = cache.Get(key);
 	if (entry == nullptr) {
 		return nullopt;
 	}
 	if (!PinnedBlock::ValidateVersionTag(entry->version_tag, expected_version_tag)) {
-		lru_cache.Delete(key);
+		cache.Delete(key);
 		return nullopt;
 	}
 
@@ -31,25 +34,35 @@ optional<PinnedBlock> ExtensionBoundedDataCacheStorage::Get(const InMemCacheBloc
 	return PinnedBlock {std::move(keep_alive), chunk_ptr};
 }
 
-bool ExtensionBoundedDataCacheStorage::Delete(const InMemCacheBlock &key) {
-	return lru_cache.Delete(key);
+template <typename Cache>
+bool ExtensionBoundedDataCacheStorage<Cache>::Delete(const InMemCacheBlock &key) {
+	return cache.Delete(key);
 }
 
-void ExtensionBoundedDataCacheStorage::Clear() {
-	lru_cache.Clear();
+template <typename Cache>
+void ExtensionBoundedDataCacheStorage<Cache>::Clear() {
+	cache.Clear();
 }
 
-void ExtensionBoundedDataCacheStorage::Clear(const InMemCacheBlock &start_key,
-                                             std::function<bool(const InMemCacheBlock &)> filter) {
-	lru_cache.Clear(start_key, std::move(filter));
+template <typename Cache>
+void ExtensionBoundedDataCacheStorage<Cache>::Clear(const InMemCacheBlock &start_key,
+                                                    std::function<bool(const InMemCacheBlock &)> filter) {
+	cache.Clear(start_key, std::move(filter));
 }
 
-vector<InMemCacheBlock> ExtensionBoundedDataCacheStorage::Keys() const {
-	return lru_cache.Keys();
+template <typename Cache>
+vector<InMemCacheBlock> ExtensionBoundedDataCacheStorage<Cache>::Keys() const {
+	return cache.Keys();
 }
 
-vector<std::pair<InMemCacheBlock, shared_ptr<InMemCacheDataEntry>>> ExtensionBoundedDataCacheStorage::Take() {
-	return lru_cache.Take();
+template <typename Cache>
+vector<std::pair<InMemCacheBlock, shared_ptr<InMemCacheDataEntry>>> ExtensionBoundedDataCacheStorage<Cache>::Take() {
+	return cache.Take();
 }
+
+template class ExtensionBoundedDataCacheStorage<
+    ThreadSafeSharedValueLruCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess>>;
+template class ExtensionBoundedDataCacheStorage<
+    ThreadSafeWTinyLfuCache<InMemCacheBlock, InMemCacheDataEntry, InMemCacheBlockLess, InMemCacheBlockHash>>;
 
 } // namespace duckdb

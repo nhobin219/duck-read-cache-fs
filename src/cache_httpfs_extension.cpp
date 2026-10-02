@@ -623,6 +623,19 @@ void UpdateInMemCacheStorage(ClientContext &context, SetScope scope, Value &para
 	inst_state.config.in_mem_cache_storage = std::move(storage_str);
 }
 
+void UpdateInMemCacheEvictionPolicy(ClientContext &context, SetScope scope, Value &parameter) {
+	auto policy_str = parameter.ToString();
+	if (std::find(ALL_IN_MEM_EVICTION_POLICIES.begin(), ALL_IN_MEM_EVICTION_POLICIES.end(), policy_str) ==
+	    ALL_IN_MEM_EVICTION_POLICIES.end()) {
+		auto valid_values = StringUtil::Join(ALL_IN_MEM_EVICTION_POLICIES, ALL_IN_MEM_EVICTION_POLICIES.size(), ", ",
+		                                     [](const string &s) { return s; });
+		throw InvalidInputException("Invalid cache_httpfs_in_mem_cache_eviction_policy '%s'. Valid options are: %s",
+		                            policy_str, valid_values);
+	}
+	auto &inst_state = GetInstanceStateOrThrow(context);
+	inst_state.config.in_mem_cache_eviction_policy = std::move(policy_str);
+}
+
 void UpdateParallelReadMode(ClientContext &context, SetScope scope, Value &parameter) {
 	auto &inst_state = GetInstanceStateOrThrow(context);
 	inst_state.config.parallel_read_mode = ParseParallelExecutorMode(parameter.ToString());
@@ -899,6 +912,15 @@ void LoadInternal(ExtensionLoader &loader) {
 	    "`cache_httpfs_in_mem_cache_block_timeout_millisec`. 'object_cache' parks blocks in DuckDB's "
 	    "per-instance ObjectCache. Must be set before any cache access for the change to take effect.",
 	    LogicalType {LogicalTypeId::VARCHAR}, *DEFAULT_IN_MEM_CACHE_STORAGE, UpdateInMemCacheStorage);
+	config.AddExtensionOption(
+	    "cache_httpfs_in_mem_cache_eviction_policy",
+	    "Eviction policy for the 'extension' in-memory data block cache storage, which applies to both the in-memory "
+	    "cache and the disk cache reader's memory cache. 'lru' (default) evicts the least recently used block. "
+	    "'w_tinylfu' admits a new block into the main cache only if it's accessed more frequently than the block it "
+	    "would evict, so a large one-pass scan doesn't flush the hot set. Must be set before any cache access for the "
+	    "change "
+	    "to take effect.",
+	    LogicalType {LogicalTypeId::VARCHAR}, *DEFAULT_IN_MEM_EVICTION_POLICY, UpdateInMemCacheEvictionPolicy);
 
 	// Metadata cache config.
 	config.AddExtensionOption("cache_httpfs_enable_metadata_cache",
