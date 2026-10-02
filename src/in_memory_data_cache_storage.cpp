@@ -7,14 +7,18 @@
 
 namespace duckdb {
 
-shared_ptr<InMemoryDataCacheStorage> BuildInMemoryDataCacheStorage(const string &mode,
+shared_ptr<InMemoryDataCacheStorage> BuildInMemoryDataCacheStorage(const string &mode, const string &eviction_policy,
                                                                    optional_ptr<DatabaseInstance> db_instance,
                                                                    size_t max_entries, uint64_t timeout_millisec) {
 	if (mode == *OBJECT_CACHE_STORAGE) {
 		ALWAYS_ASSERT(db_instance != nullptr);
 		return make_shared_ptr<ObjectCacheStorage>(*db_instance, timeout_millisec);
 	}
-	return make_shared_ptr<ExtensionBoundedDataCacheStorage>(max_entries, timeout_millisec);
+	if (eviction_policy == *IN_MEM_W_TINYLFU_EVICTION) {
+		return make_shared_ptr<WTinyLfuDataCacheStorage>(max_entries, timeout_millisec);
+	}
+	ALWAYS_ASSERT(eviction_policy == *IN_MEM_LRU_EVICTION);
+	return make_shared_ptr<LruDataCacheStorage>(max_entries, timeout_millisec);
 }
 
 } // namespace duckdb

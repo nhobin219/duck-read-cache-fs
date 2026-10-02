@@ -11,6 +11,10 @@ D SET cache_httpfs_min_disk_bytes_for_cache=5000000;
 -- The maximum memory consumption is calculated as [cache_httpfs_cache_block_size] * [cache_httpfs_max_in_mem_cache_block_count].
 D SET cache_httpfs_max_in_mem_cache_block_count=10;
 
+-- Choose the eviction policy for in-memory data blocks (also used by the disk cache reader's memory cache).
+-- 'lru' (default) evicts the least recently used block; 'w_tinylfu' keeps frequently read blocks resident across large scans.
+D SET cache_httpfs_in_mem_cache_eviction_policy='w_tinylfu';
+
 -- Control the number of metadata cache entries.
 D SET cache_httpfs_metadata_cache_entry_size=10;
 

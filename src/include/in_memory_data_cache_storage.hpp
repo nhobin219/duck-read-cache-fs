@@ -66,8 +66,8 @@ public:
 	virtual vector<std::pair<InMemCacheBlock, shared_ptr<InMemCacheDataEntry>>> Take() = 0;
 };
 
-// Construct the storage backend selected by [mode].
-shared_ptr<InMemoryDataCacheStorage> BuildInMemoryDataCacheStorage(const string &mode,
+// Construct the storage backend selected by [mode]; [eviction_policy] applies to the extension-managed backend.
+shared_ptr<InMemoryDataCacheStorage> BuildInMemoryDataCacheStorage(const string &mode, const string &eviction_policy,
                                                                    optional_ptr<DatabaseInstance> db_instance,
                                                                    size_t max_entries, uint64_t timeout_millisec);
 

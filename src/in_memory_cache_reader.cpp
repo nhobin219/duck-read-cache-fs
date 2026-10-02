@@ -29,6 +29,7 @@ struct InMemoryCacheReaderConfig {
 	uint64_t max_subrequest_count = DEFAULT_MAX_SUBREQUEST_COUNT;
 	bool enable_cache_validation = DEFAULT_ENABLE_CACHE_VALIDATION;
 	string in_mem_cache_storage = *DEFAULT_IN_MEM_CACHE_STORAGE;
+	string in_mem_cache_eviction_policy = *DEFAULT_IN_MEM_EVICTION_POLICY;
 };
 
 namespace {
@@ -42,6 +43,7 @@ InMemoryCacheReaderConfig GetConfig(const CacheHttpfsInstanceState &instance_sta
 	    .max_subrequest_count = instance_state.config.max_subrequest_count,
 	    .enable_cache_validation = instance_state.config.enable_cache_validation,
 	    .in_mem_cache_storage = instance_state.config.in_mem_cache_storage,
+	    .in_mem_cache_eviction_policy = instance_state.config.in_mem_cache_eviction_policy,
 	};
 }
 
@@ -97,8 +99,9 @@ void InMemoryCacheReader::ReadAndCache(FileHandle &handle, char *buffer, idx_t r
 	const auto config = GetConfig(*state);
 
 	std::call_once(cache_init_flag, [this, &config, &state]() {
-		storage = BuildInMemoryDataCacheStorage(config.in_mem_cache_storage, state->db_instance,
-		                                        config.max_cache_block_count, config.cache_block_timeout_millisec);
+		storage = BuildInMemoryDataCacheStorage(config.in_mem_cache_storage, config.in_mem_cache_eviction_policy,
+		                                        state->db_instance, config.max_cache_block_count,
+		                                        config.cache_block_timeout_millisec);
 	});
 
 	const idx_t block_size = config.cache_block_size;

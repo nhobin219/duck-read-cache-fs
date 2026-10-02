@@ -40,6 +40,11 @@ const NoDestructor<string> EXT_BOUNDED_STORAGE {"extension"};
 const NoDestructor<string> OBJECT_CACHE_STORAGE {"object_cache"};
 const array<string, 2> ALL_IN_MEM_CACHE_STORAGES {{"extension", "object_cache"}};
 
+// Eviction policy for the extension-managed in-memory data block cache.
+const NoDestructor<string> IN_MEM_LRU_EVICTION {"lru"};
+const NoDestructor<string> IN_MEM_W_TINYLFU_EVICTION {"w_tinylfu"};
+const array<string, 2> ALL_IN_MEM_EVICTION_POLICIES {{"lru", "w_tinylfu"}};
+
 // Parallel read executor mode.
 const NoDestructor<string> INTERNAL_THREAD_POOL_EXECUTOR {"internal_thread_pool"};
 const NoDestructor<string> DUCKDB_TASK_SCHEDULER_EXECUTOR {"duckdb_task_scheduler"};
@@ -56,6 +61,9 @@ const NoDestructor<string> DEFAULT_CACHE_TYPE {*ON_DISK_CACHE_TYPE};
 
 // Default to extension-managed in-memory data block cache storage.
 const NoDestructor<string> DEFAULT_IN_MEM_CACHE_STORAGE {*EXT_BOUNDED_STORAGE};
+
+// Default to LRU eviction for the extension-managed in-memory data block cache.
+const NoDestructor<string> DEFAULT_IN_MEM_EVICTION_POLICY {*IN_MEM_LRU_EVICTION};
 
 // Default to timestamp-based on-disk cache eviction policy.
 const NoDestructor<string> DEFAULT_ON_DISK_EVICTION_POLICY {*ON_DISK_CREATION_TIMESTAMP_EVICTION};

@@ -52,7 +52,8 @@ set(CATCHFS_UNITTEST_OBJECTS
     test_stats_cache.cpp
     test_thread_pool.cpp
     test_url_utils.cpp
-    test_utils.cpp)
+    test_utils.cpp
+    test_w_tinylfu_cache.cpp)
 
 add_executable(unittest_cache_httpfs ${CATCHFS_UNITTEST_OBJECTS})
 

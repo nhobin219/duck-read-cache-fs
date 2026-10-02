@@ -80,7 +80,7 @@ void FillDataCacheConfig(const InstanceConfig &config, DataChunk &output, idx_t 
 		output.SetValue(col++, /*index=*/0, GetDiskCacheReaderMemoryCacheType(config));
 	} else if (config.cache_type == *IN_MEM_CACHE_TYPE) {
 		output.SetValue(col++, /*index=*/0, Value::UBIGINT(config.cache_block_size));
-		output.SetValue(col++, /*index=*/0, "lru"); // currently only LRU supported
+		output.SetValue(col++, /*index=*/0, config.in_mem_cache_eviction_policy);
 	}
 }
 

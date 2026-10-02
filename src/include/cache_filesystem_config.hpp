@@ -41,6 +41,11 @@ extern const NoDestructor<string> EXT_BOUNDED_STORAGE;
 extern const NoDestructor<string> OBJECT_CACHE_STORAGE;
 extern const array<string, 2> ALL_IN_MEM_CACHE_STORAGES;
 
+// Eviction policy for the extension-managed in-memory data block cache.
+extern const NoDestructor<string> IN_MEM_LRU_EVICTION;
+extern const NoDestructor<string> IN_MEM_W_TINYLFU_EVICTION;
+extern const array<string, 2> ALL_IN_MEM_EVICTION_POLICIES;
+
 // Parallel read executor mode.
 extern const NoDestructor<string> INTERNAL_THREAD_POOL_EXECUTOR;
 extern const NoDestructor<string> DUCKDB_TASK_SCHEDULER_EXECUTOR;
@@ -66,6 +71,9 @@ extern const NoDestructor<string> DEFAULT_CACHE_TYPE;
 
 // Default to extension-managed in-memory data block cache storage.
 extern const NoDestructor<string> DEFAULT_IN_MEM_CACHE_STORAGE;
+
+// Default to LRU eviction for the extension-managed in-memory data block cache.
+extern const NoDestructor<string> DEFAULT_IN_MEM_EVICTION_POLICY;
 
 // Default to timestamp-based on-disk cache eviction policy.
 extern const NoDestructor<string> DEFAULT_ON_DISK_EVICTION_POLICY;

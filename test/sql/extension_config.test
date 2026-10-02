@@ -67,6 +67,25 @@ SET cache_httpfs_in_mem_cache_storage='nonsense';
 ----
 Invalid cache_httpfs_in_mem_cache_storage
 
+# In-memory cache eviction policy option. Default is 'lru'.
+query I
+SELECT current_setting('cache_httpfs_in_mem_cache_eviction_policy');
+----
+lru
+
+statement ok
+SET cache_httpfs_in_mem_cache_eviction_policy='w_tinylfu';
+
+query I
+SELECT current_setting('cache_httpfs_in_mem_cache_eviction_policy');
+----
+w_tinylfu
+
+statement error
+SET cache_httpfs_in_mem_cache_eviction_policy='nonsense';
+----
+Invalid cache_httpfs_in_mem_cache_eviction_policy
+
 # Test cache_httpfs_cache_directory, empty string falls back to default
 statement ok
 SET cache_httpfs_cache_directory='';
